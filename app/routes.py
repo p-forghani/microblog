@@ -5,7 +5,7 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import app, db
-from app.forms import LoginForm
+from app.forms import LoginForm, RegistrationForm
 from app.models import User
 
 
@@ -28,29 +28,38 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
     # Checks if the user is already logged-in
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+
     form = LoginForm()
+
     # Check if form is submitted with data and passes the validations
     if form.validate_on_submit():
+
         # Executes the query and returns a single scalar value
         user = db.session.scalar(
             sa.select(User).where(User.username == form.username.data)
         )
+
         # Checks if user exists and password is correct
         if (user is None) or (not user.check_password(form.password.data)):
             flash("Invalid username or password")
             return redirect(url_for('login'))
+
         # Registers the user as logged in
         login_user(user, remember=form.remember_me.data)
+
         next_page = request.args.get('next')
+
         # netloc is the network location (e.g., example.com, localhost:8000),
         # if netloc is not empty it means url contains domain
         # Full url including the domain name is ignored due to the security
         if not next_page or urlsplit(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
+
     # Shows login page
     return render_template('login.html', title='Sign In', form=form)
 
@@ -59,3 +68,29 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash("You are now registered")
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Register', form=form)
+
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = db.first_or_404(sa.select(User).where(User.username == username))
+    posts = [
+        {"author": user, "body": "Test post #1"},
+        {"author": user, "body": "Test post #2"},
+    ]
+    return render_template('user.html', user=user, posts=posts)

@@ -11,10 +11,11 @@
     <div>
       Microblog:
       <a href="{{ url_for('index') }}">Home</a>
-      <!-- current_user is automatically injected into the html with flask-login -->
+      <!-- <current_user> is automatically injected into the html by <flask-login> -->
       {% if current_user.is_anonymous %}
       <a href="{{ url_for('login') }}">Log In</a>
       {% else %}
+      <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
       <a href="{{ url_for('logout') }}">Log Out</a>
       {% endif %}
     </div>
@@ -28,7 +29,21 @@
     </ul>
     {% endif %}
     {% endwith %}
-    <!-- "content" is name of the block -->
+    <!-- <content> is name of the block -->
     {% block content %}{% endblock %}
   </body>
 </html>
+
+<!-- Flask template access things including:
+1. url_for(): Generate URLs by view function name.
+2. current_user: Access logged-in user info (from Flask-Login).
+3. request: Access HTTP request data (e.g., query params).
+4. session: Access user session variables.
+5. g: Store request-scoped data (e.g., db connections).
+6. View-passed data: Access variables/data from views.
+7. Form instances: Render form fields, errors (Flask-WTF).
+8. get_flashed_messages(): Display flash messages.
+9. Template filters: Use built-in/custom filters (e.g., safe).
+10. config: Access Flask config values.
+11. Loops & conditionals: Control structures in templates.
+12. Static files (url_for('static')): Link to CSS, JS files. -->
