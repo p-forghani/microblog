@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 import sqlalchemy as sa
@@ -5,8 +6,18 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import app, db
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm
 from app.models import User
+
+
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.now(timezone.utc)
+        # when you reference current_user, Flask-Login will invoke the user
+        # loader callback function, which will run a database query that will
+        # put the target user in the database session.
+        db.session.commit()
 
 
 @app.route('/')
@@ -94,3 +105,24 @@ def user(username):
         {"author": user, "body": "Test post #2"},
     ]
     return render_template('user.html', user=user, posts=posts)
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    # Construct the form
+    form = EditProfileForm()
+    # if <validate_on_submit()> returns True it means:
+    # 1. Method is <POST>
+    # 2. Form data passed the validations
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.about_me = form.about_me.data
+        db.session.commit()
+        flash("Your changes are made.")
+        return redirect(url_for('edit_profile'))
+    # Fill the form with current data that user can edit it
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.about_me.data = current_user.about_me
+    return render_template('edit_profile.html', form=form)

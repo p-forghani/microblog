@@ -2,7 +2,9 @@ import sqlalchemy as sa
 import re
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, PasswordField, StringField, SubmitField
+from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from wtforms.validators import Length
 
 from app import db
 from app.models import User
@@ -50,3 +52,11 @@ class RegistrationForm(FlaskForm):
             raise ValidationError(
                 "Password must contain as least 1 letter"
             )
+
+
+class EditProfileForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired()])
+    # Make sure the max length is equal to allocated space in database
+    about_me = TextAreaField('About Me', validators=[
+        Length(min=0, max=140)])
+    submit = SubmitField("Submit")
