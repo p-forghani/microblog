@@ -6,7 +6,8 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm
+from app.forms import EditProfileForm, LoginForm, RegistrationForm
+
 from app.models import User
 
 
@@ -99,29 +100,31 @@ def register():
 @app.route('/user/<username>')
 @login_required
 def user(username):
-    user = db.first_or_404(sa.select(User).where(User.username == username))
+    user = db.first_or_404(sa.select(User).where(
+        User.username == username))
     posts = [
-        {"author": user, "body": "Test post #1"},
-        {"author": user, "body": "Test post #2"},
+        {"author": user, "body": "post 1"},
+        {"author": user, "body": "post 2"}
     ]
     return render_template('user.html', user=user, posts=posts)
 
 
-@app.route('/edit_profile', methods=['GET', 'POST'])
+@app.route("/user/edit_profile", methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    # Construct the form
+    # Construct the form object
     form = EditProfileForm()
-    # if <validate_on_submit()> returns True it means:
-    # 1. Method is <POST>
-    # 2. Form data passed the validations
+    # Check if it is post request
     if form.validate_on_submit():
-        current_user.username = form.username.data
-        current_user.about_me = form.about_me.data
+        # Update the db
+        if form.username.data != '':
+            current_user.username = form.username.data
+        if form.about_me.data != '':
+            current_user.about_me = form.about_me.data
         db.session.commit()
-        flash("Your changes are made.")
-        return redirect(url_for('edit_profile'))
-    # Fill the form with current data that user can edit it
+        flash("Your changes are made")
+        # Return proper messages
+    # return pre-filled form
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me

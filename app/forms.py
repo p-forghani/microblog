@@ -11,6 +11,19 @@ from app.models import User
 from app.constants import MIN_PASSWORD_LENGTH
 
 
+class OneRequired:
+    """ A custom validatore that validates if one of the fields is
+    filled with data"""
+    def __init__(self, *field_names, message=None):
+        self.fields = field_names
+        if not message:
+            self.message = "At least one of the fields are required"
+
+    def __call__(self, form, field):
+        if not any(bool(form[f].data) for f in self.fields):
+            raise ValidationError(message=self.message)
+
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -55,8 +68,8 @@ class RegistrationForm(FlaskForm):
 
 
 class EditProfileForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired()])
-    # Make sure the max length is equal to allocated space in database
-    about_me = TextAreaField('About Me', validators=[
-        Length(min=0, max=140)])
-    submit = SubmitField("Submit")
+    username = StringField('Username')
+    about_me = TextAreaField("About Me", validators=[
+        Length(0, 140), OneRequired("about_me", "username")
+    ])
+    submit = SubmitField('Submit')
