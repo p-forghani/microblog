@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import hashlib
 from typing import Optional
 
 import sqlalchemy as sa
@@ -15,7 +16,6 @@ class User(UserMixin, db.Model):
     # tables by default. If you prefer to choose your own table names,
     # you can add an attribute named __tablename__ to the model class.
     __tablename__ = 'user'
-
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True,
                                                 unique=True)
@@ -23,11 +23,18 @@ class User(UserMixin, db.Model):
                                              unique=True)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
 
+    about_me: so.Mapped[Optional[str]] = so.mapped_column(sa.String(140))
+
+    last_seen: so.Mapped[Optional[datetime]] = so.mapped_column(
+        sa.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
     posts: so.WriteOnlyMapped['Post'] = so.relationship(
         back_populates='author'
     )
 
     def __repr__(self):
+
         return f"<User {self.username}>"
 
     def set_password(self, password):
@@ -35,6 +42,13 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def avatar(self, size):
+        email_hash = hashlib.md5(
+            self.email.lower().strip().encode()
+        ).hexdigest()
+        avatar_url = f"https://gravatar.com/avatar/{email_hash}?s={size}&d=mp"
+        return avatar_url
 
 
 class Post(db.Model):
