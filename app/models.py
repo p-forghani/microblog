@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import hashlib
+
 from typing import Optional
 
 import sqlalchemy as sa
@@ -26,7 +27,8 @@ class User(UserMixin, db.Model):
     about_me: so.Mapped[Optional[str]] = so.mapped_column(sa.String(140))
 
     last_seen: so.Mapped[Optional[datetime]] = so.mapped_column(
-        sa.DateTime, default=lambda: datetime.now(timezone.utc)
+
+        default=lambda: datetime.now(timezone.utc)
     )
 
     posts: so.WriteOnlyMapped['Post'] = so.relationship(
@@ -68,6 +70,8 @@ class Post(db.Model):
         return f"<Post {self.body}"
 
 
+# When you reference current_user, Flask-Login will invoke the user loader
+# callback function
 @login.user_loader
 def load_user(id):
     return db.session.get(User, int(id))

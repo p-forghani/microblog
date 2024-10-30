@@ -7,6 +7,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app import app, db
 from app.forms import EditProfileForm, LoginForm, RegistrationForm
+
 from app.models import User
 
 
@@ -14,6 +15,9 @@ from app.models import User
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.now(timezone.utc)
+        # when you reference current_user, Flask-Login will invoke the user
+        # loader callback function, which will run a database query that will
+        # put the target user in the database session.
         db.session.commit()
 
 
@@ -121,4 +125,7 @@ def edit_profile():
         flash("Your changes are made")
         # Return proper messages
     # return pre-filled form
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', form=form)
