@@ -123,7 +123,6 @@ def edit_profile():
             current_user.about_me = form.about_me.data
         db.session.commit()
         flash("Your changes are made")
-        # Return proper messages
     # return pre-filled form
     elif request.method == 'GET':
         form.username.data = current_user.username
