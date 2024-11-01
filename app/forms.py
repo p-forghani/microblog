@@ -60,3 +60,19 @@ class EditProfileForm(FlaskForm):
         Length(0, 140),
     ])
     submit = SubmitField('Submit')
+
+    # TODO: Raise error if user try to change to another user's username
+    def __init__(self, current_username, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_username = current_username
+
+    def validate_username(self, username):
+        # If username == current user. pass
+        # if username is unique. pass
+        # if username is duplicate: raise
+        if username.data != self.current_username:
+            user = db.session.scalar(
+                sa.select(User).where(username.data == User.username)
+            )
+            if user is not None:
+                raise ValidationError("Such username already exists.")

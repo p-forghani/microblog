@@ -113,7 +113,7 @@ def user(username):
 @login_required
 def edit_profile():
     # Construct the form object
-    form = EditProfileForm()
+    form = EditProfileForm(current_user.username)
     # Check if it is post request
     if form.validate_on_submit():
         # Update the db
@@ -123,6 +123,7 @@ def edit_profile():
             current_user.about_me = form.about_me.data
         db.session.commit()
         flash("Your changes are made")
+        return redirect(url_for('edit_profile'))
     # return pre-filled form
     elif request.method == 'GET':
         form.username.data = current_user.username
