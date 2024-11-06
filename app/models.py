@@ -11,6 +11,17 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app import db, login
 
 
+followers = sa.Table(
+    "followers",
+    db.metadata,
+    # Marking both columns as primary key is called compound primary key
+    sa.Column('follower_id', sa.Integer, sa.ForeignKey(column='user.id'),
+              primary_key=True),
+    sa.Column('followed_id', sa.Integer, sa.ForeignKey('user.id'),
+              primary_key=True)
+)
+
+
 class User(UserMixin, db.Model):
 
     # Flask-SQLAlchemy uses a "snake case" naming convention for database
@@ -35,6 +46,21 @@ class User(UserMixin, db.Model):
         back_populates='author'
     )
 
+    followings: so.WriteOnlyMapped['User'] = so.relationship(
+        secondary='followers',
+        primaryjoin=(followers.c.follower_id == id),
+        secondaryjoin=(followers.c.followed_id == id),
+        back_populates='followers'
+    )
+
+    followers: so.WriteOnlyMapped['User'] = so.relationship(
+        secondary='followers',  # it is the name of the association table
+        primaryjoin=(followers.c.followed_id == id),
+        secondaryjoin=(followers.c.follower_id == id),
+        back_populates='followings'
+
+    )
+
     def __repr__(self):
 
         return f"<User {self.username}>"
@@ -49,8 +75,85 @@ class User(UserMixin, db.Model):
         email_hash = hashlib.md5(
             self.email.lower().strip().encode()
         ).hexdigest()
-        avatar_url = f"https://gravatar.com/avatar/{email_hash}?s={size}&d=mp"
+        avatar_url = (
+            f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d=mp")
         return avatar_url
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followings.add(user)
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followings.remove(user)
+
+    def is_following(self, user):
+        # All write-only relationships have a select() method that constructs
+        # a query that returns all the elements in the relationship.
+        q = self.followings.select().where(User.id == user.id)
+        return db.session.scalar(q) is not None
+
+    def followers_count(self):
+        q = sa.select(sa.func.count()).select_from(
+            self.followers.select().subquery()
+        )
+        return db.session.scalar(q)
+
+    def following_count(self):
+        q = sa.select(sa.func.count()).select_from(
+            self.followings.select().subquery()
+        )
+        return db.session.scalar(q)
+
+    def following_posts(self):
+        """Returns posts made by users that the current user ('self') follows,
+        as well as the current user's own posts."""
+
+        # Creating aliased versions of the User model:
+        # - `Author`: Represents the users who are authors of posts.
+        # - `Follower`: Represents the users who follow those authors
+        # (including 'self').
+        # Using aliases allows us to reference `User` in multiple roles within
+        # the query.
+        Author = so.aliased(User)
+        Follower = so.aliased(User)
+
+        return (
+            # Start building the SQLAlchemy query by selecting all `Post`
+            # entries.
+            sa.select(Post)
+
+            # Join `Post.author` (i.e., the user who wrote the post) to our
+            # alias `Author`.
+            # `.of_type(Author)` specifies that we want to reference the `User`
+            # model as `Author`.
+            .join(Post.author.of_type(Author))
+
+            # Perform an outer join between the `Author`'s followers and the
+            # alias `Follower`.
+            # This join retrieves all followers of each `Author`, including
+            # "self" if they are a follower.
+            # `isouter=True` indicates a left outer join, so posts are still
+            # included if `Author` has no followers.
+            .join(Author.followers.of_type(Follower), isouter=True)
+
+            # Filter to only include posts where:
+            # - The current user (`self`) is either the `Follower` (i.e., they
+            # follow the `Author`), or
+            # - The current user (`self`) is the `Author` (to include their
+            # own posts).
+            .where(sa.or_(
+                self.id == Follower.id,  # self is following the author
+                self.id == Author.id     # self is the author
+            ))
+
+            # Group results by each post. This ensures that each post only
+            # appears once.
+            .group_by(Post)
+
+            # Order the posts by time_stamp in descending order (newest first).
+            .order_by(Post.time_stamp.desc())
+        )
 
 
 class Post(db.Model):
