@@ -7,7 +7,8 @@
       <td>
         <h1>Username: {{ user.username }}</h1>
         {% if user.about_me %}<p>About Me: {{ user.about_me }}</p>{% endif %}
-        {% if user.last_seen %}<p>Last seen: {{ user.last_seen }}</p>{% endif %}
+        {% if user.last_seen %}<p>Last seen: {{ user.last_seen.strftime("%Y-%m-%d %H:%M:%S") }}</p>{% endif %}
+        <p>{{ user.followers_count() }} Followers | {{ user.following_count() }} Following</p>
       </td>
     </tr>
   </table>
@@ -15,6 +16,17 @@
    profile,but not when you are viewing the profile of someone else. -->
   {% if user == current_user %}
   <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
+  <!-- current user is not following the user -->
+  {% elif not current_user.is_following(user) %}
+  <form action="{{ url_for('follow', username=user.username) }}" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.submit(value='Follow') }}
+  </form>
+  {% elif current_user.is_following(user) %}
+  <form action="{{ url_for('unfollow', username=user.username) }}" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.submit(value='Unfollow') }}
+  </form>
   {% endif %}
   <hr>
   {% for post in posts %}
