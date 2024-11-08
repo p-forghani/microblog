@@ -2,6 +2,6 @@
 <table>
   <tr valign="top">
     <td><img src="{{ post.author.avatar(36) }}" alt=""></td>
-    <td>{{ post.author.username }} Says: <b>{{ post.body }}</b></td>
+    <td><a href="{{ url_for('user', username=post.author.username) }}">{{ post.author.username }}</a> Says: <b>{{ post.body }}</b></td>
   </tr>
 </table>

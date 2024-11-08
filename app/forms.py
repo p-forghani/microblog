@@ -6,9 +6,8 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 from wtforms.validators import Length
 
-from app import db
+from app import db, app
 from app.models import User
-from app.constants import MIN_PASSWORD_LENGTH
 
 
 class LoginForm(FlaskForm):
@@ -45,9 +44,10 @@ class RegistrationForm(FlaskForm):
             raise ValidationError("Email already exists")
 
     def validate_password(self, password):
-        if len(password.data) < MIN_PASSWORD_LENGTH:
-            raise ValidationError(f"Password must be at least \
-                                  {MIN_PASSWORD_LENGTH} characters long")
+        if len(password.data) < app.config['MIN_PASSWORD_LENGTH']:
+            raise ValidationError(
+                f"Password must be at least "
+                f"{app.config['MIN_PASSWORD_LENGTH']} characters long")
         if not re.search(r"[A-Za-z]", password.data):
             raise ValidationError(
                 "Password must contain as least 1 letter"
@@ -61,7 +61,6 @@ class EditProfileForm(FlaskForm):
     ])
     submit = SubmitField('Submit')
 
-    # TODO: Raise error if user try to change to another user's username
     def __init__(self, current_username, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_username = current_username
@@ -79,4 +78,11 @@ class EditProfileForm(FlaskForm):
 
 
 class EmptyForm(FlaskForm):
+    submit = SubmitField('Submit')
+
+
+class PostForm(FlaskForm):
+    post = TextAreaField('Say Something', validators=[
+        DataRequired(), Length(min=1, max=140)
+    ])
     submit = SubmitField('Submit')
