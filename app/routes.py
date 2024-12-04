@@ -6,8 +6,10 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import app, db
+from app.email import send_password_reset_email
 from app.forms import (EditProfileForm, EmptyForm, LoginForm, PostForm,
-                       RegistrationForm)
+                       RegistrationForm, ResetPasswordRequestForm,
+                       ResetPasswordForm)
 from app.models import User, Post
 
 
@@ -219,3 +221,45 @@ def unfollow(username):
         return redirect(url_for('index'))
     else:
         return redirect(url_for('index'))
+
+
+@app.route("/reset_password_request", methods=['POST', 'GET'])
+def reset_password_request():
+    form = ResetPasswordRequestForm()
+
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if form.validate_on_submit():
+        # Check if email exists in db.
+        user = db.session.scalar(
+            sa.select(User).where(User.email == form.email.data)
+        )
+        if user:
+            send_password_reset_email(user)
+        flash("If your email is correct, the instructions to change "
+              "your password is sent to your email.")
+        return redirect(url_for('login'))
+
+    return render_template('reset_password_request.html',
+                           title='Reset Password', form=form)
+
+
+@app.route('/reset_password/<token>', methods=['POST', 'GET'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    user = User.verify_reset_password_token(token)
+    if not user:
+        return redirect(url_for('index'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        print('good to go')
+        user.set_password(form.new_password.data)
+        db.session.commit()
+        flash("Your password has been changed succussfully.")
+        return redirect(url_for('login'))
+    print('not good to go')
+    return render_template('reset_password.html', title='Reset Password',
+                           form=form)

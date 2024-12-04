@@ -4,3 +4,6 @@ Flask-WTF==1.2.1
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 email_validator==2.2.0
+PyJWT==2.9.0
+sendgrid==6.11.0
+Flask-Mail==0.10.0

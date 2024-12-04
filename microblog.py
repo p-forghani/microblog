@@ -12,6 +12,7 @@ def make_shell_context():
     """Preload objects into Flask shell."""
     return {'sa': sa, 'so': so, 'db': db, 'User': User, 'Post': Post}
 
+
 # This is the custom shell command.
 @click.command('pshell', short_help='Runs ptpython shell in the app context.')
 @with_appcontext
@@ -24,6 +25,7 @@ def shell_command():
     except ImportError:
         import code  # Default Python shell
         code.interact(local=dict(globals(), **locals()))
+
 
 print("Registering custom shell")
 # Register the custom shell command

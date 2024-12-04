@@ -1,32 +1,12 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% import "bootstrap_wtf.html" as wtf %}
 
 {% block content %}
-  <h1>Sign In</h1>
-  <!-- The <action> attribute of the form is used to tell the browser the URL
-  that should be used when submitting the information the user entered
-  in the form. When the <action> is set to an empty string the form is
-  submitted to the URL that is currently in the address bar, which is the
-  URL that rendered the form on the page. -->
-  <form action="" method="post" novalidate>
-    <!-- The <hidden_tag> contains CSRF (Cross-Site Request Forgery) token data,
-    which is crucial for preventing CSRF attacks. -->
-    {{ form.hidden_tag() }}
+    <h1>Sign In</h1>
+    {{ wtf.quick_form(form) }}
+    <p>New User? <a href="{{ url_for('register') }}">Click to Register!</a></p>
     <p>
-      {{ form.username.label }}<br>
-      {{ form.username(size=32) }}
-      {% for error in form.username.errors %}
-      <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}
+        Forgot Your Password?
+        <a href="{{ url_for('reset_password_request') }}">Click to Reset It</a>
     </p>
-    <p>
-      {{ form.password.label }}<br>
-      {{ form.password(size=32)}}
-      {% for error in form.password.errors %}
-      <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}
-    </p>
-    <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
-    <p>{{ form.submit() }}</p>
-  </form>
-  <p>New User? <a href="{{ url_for('register') }}">Click to Register!</a></p>
 {% endblock %}
