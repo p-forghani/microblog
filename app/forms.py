@@ -1,3 +1,4 @@
+# Import necessary modules and packages
 import sqlalchemy as sa
 import re
 from flask_wtf import FlaskForm
@@ -6,20 +7,31 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 from wtforms.validators import Length
 
+# Import application and database instances
 from app import db, app
+# Import User model
 from app.models import User
 
 
+# Define LoginForm class inheriting from FlaskForm
 class LoginForm(FlaskForm):
+    # Username field with DataRequired validator
     username = StringField('Username', validators=[DataRequired()])
+    # Password field with DataRequired validator
     password = PasswordField('Password', validators=[DataRequired()])
+    # Remember me checkbox
     remember_me = BooleanField('Remember Me')
+    # Submit button
     submit = SubmitField('Sign In')
 
 
+# Define RegistrationForm class inheriting from FlaskForm
 class RegistrationForm(FlaskForm):
+    # Username field with DataRequired validator
     username = StringField('Username', validators=[DataRequired()])
+    # Email field with DataRequired and Email validators
     email = StringField('Email', validators=[DataRequired(), Email()])
+    # Password field with DataRequired validator
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField(
         'Repeat Password',

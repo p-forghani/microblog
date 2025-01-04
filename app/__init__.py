@@ -6,6 +6,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
+from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 
 from config import Config
@@ -19,6 +20,8 @@ db = SQLAlchemy(app)
 mail = Mail(app)
 
 migrate = Migrate(app, db)
+
+moment = Moment(app)
 
 if (not app.debug):
     # Config the log file
