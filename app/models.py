@@ -179,6 +179,9 @@ class Post(db.Model):
     time_stamp: so.Mapped[datetime] = so.mapped_column(
         index=True, default=lambda: datetime.now(tz=timezone.utc)
     )
+
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
+
     # Add index=True since Not all databases automatically create an index for
     # foreign keys.
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id),

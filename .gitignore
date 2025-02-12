@@ -167,3 +167,4 @@ app.db
 r&d.py
 sendgrid.env
 .history
+.env

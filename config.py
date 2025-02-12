@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 
+
 basedir = Path(__file__).resolve().parent
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    SECRET_KEY = os.getenv('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URI") or \
         f'sqlite:///{basedir / "app.db"}'
 
@@ -19,4 +20,5 @@ class Config:
     ADMINS = ['forghani.dev@gmail.com']
 
     MIN_PASSWORD_LENGTH = 4
-    POSTS_PER_PAGE = 3
+    POSTS_PER_PAGE = 5
+    LANGUAGES = ['en', 'fa']

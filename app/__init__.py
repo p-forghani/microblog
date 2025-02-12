@@ -1,8 +1,9 @@
 import logging
+from flask_babel import Babel
 import os
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask
+from flask import Flask, request
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
@@ -12,9 +13,17 @@ from flask_sqlalchemy import SQLAlchemy
 from config import Config
 
 app = Flask(__name__)
+
+
+def get_locale():
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+
 login = LoginManager(app)
 login.login_view = 'login'
+
 app.config.from_object(Config)
+
 db = SQLAlchemy(app)
 
 mail = Mail(app)
@@ -22,6 +31,17 @@ mail = Mail(app)
 migrate = Migrate(app, db)
 
 moment = Moment(app)
+
+# The Babel instance is created and initialized with the Flask app
+# The locale_selector argument is a function that is called to choose
+# the language to use for the request
+# The best_match method of the request.accept_languages object returns the
+# best language for the client to use based on the Accept-Language header sent
+# by the client
+
+# I did not use the bable in this project but initiated it only for future
+# updates.
+babel = Babel(app, locale_selector=get_locale)
 
 if (not app.debug):
     # Config the log file
