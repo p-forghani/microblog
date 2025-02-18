@@ -1,16 +1,27 @@
-# Import necessary modules and packages
+from flask import current_app
 import sqlalchemy as sa
-import re
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, PasswordField, StringField, SubmitField
-from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
-from wtforms.validators import Length
 
-# Import application and database instances
-from app import db, app
-# Import User model
+from app import db
 from app.models import User
+
+
+#  In WTForms custom validators, the function must accept both form and field
+# as arguments, even if form is not used.
+# a field passes validation if the custom validator function does not raise a
+# ValidationError
+def validate_password(form, field):
+    if len(field.data) < current_app.config['MIN_PASSWORD_LENGTH']:
+        raise ValidationError(
+            f"Password must be at least "
+            f"{current_app.config['MIN_PASSWORD_LENGTH']} characters long")
+    # Uncomment this line if you want passwords contain letter
+    # if not re.search(r"[A-Za-z]", field.data):
+    #     raise ValidationError(
+    #         "Password must contain as least 1 letter"
+    #     )
 
 
 # Define LoginForm class inheriting from FlaskForm
@@ -32,7 +43,8 @@ class RegistrationForm(FlaskForm):
     # Email field with DataRequired and Email validators
     email = StringField('Email', validators=[DataRequired(), Email()])
     # Password field with DataRequired validator
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password',
+                             validators=[DataRequired(), validate_password])
     password2 = PasswordField(
         'Repeat Password',
         validators=[DataRequired(), EqualTo('password')])
@@ -55,50 +67,6 @@ class RegistrationForm(FlaskForm):
         if user is not None:
             raise ValidationError("Email already exists")
 
-    def validate_password(self, password):
-        if len(password.data) < app.config['MIN_PASSWORD_LENGTH']:
-            raise ValidationError(
-                f"Password must be at least "
-                f"{app.config['MIN_PASSWORD_LENGTH']} characters long")
-        if not re.search(r"[A-Za-z]", password.data):
-            raise ValidationError(
-                "Password must contain as least 1 letter"
-            )
-
-
-class EditProfileForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    about_me = TextAreaField("About Me", validators=[
-        Length(0, 140),
-    ])
-    submit = SubmitField('Submit')
-
-    def __init__(self, current_username, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.current_username = current_username
-
-    def validate_username(self, username):
-        # If username == current user. pass
-        # if username is unique. pass
-        # if username is duplicate: raise
-        if username.data != self.current_username:
-            user = db.session.scalar(
-                sa.select(User).where(username.data == User.username)
-            )
-            if user is not None:
-                raise ValidationError("Such username already exists.")
-
-
-class EmptyForm(FlaskForm):
-    submit = SubmitField('Submit')
-
-
-class PostForm(FlaskForm):
-    post = TextAreaField('Say Something', validators=[
-        DataRequired(), Length(min=1, max=140)
-    ])
-    submit = SubmitField('Submit')
-
 
 class ResetPasswordRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -106,7 +74,8 @@ class ResetPasswordRequestForm(FlaskForm):
 
 
 class ResetPasswordForm(FlaskForm):
-    new_password = PasswordField('New Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[
+        DataRequired(), validate_password])
     new_password_2 = PasswordField(
         'Repeat New Password',
         validators=[DataRequired(), EqualTo('new_password')])

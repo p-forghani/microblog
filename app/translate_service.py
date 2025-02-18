@@ -1,12 +1,12 @@
 import deepl
 import os
-from app import app
+from flask import current_app
 
 
 def translate(text, source_lang, dest_lang):
     auth_key = os.getenv('deepl_api_key')
     if not auth_key:
-        app.logger.info('Could not authenticate the api key')
+        current_app.logger.info('Could not authenticate the api key')
 
     translator = deepl.Translator(auth_key)
 

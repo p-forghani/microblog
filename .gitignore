@@ -168,3 +168,5 @@ r&d.py
 sendgrid.env
 .history
 .env
+/notes
+/tmp
